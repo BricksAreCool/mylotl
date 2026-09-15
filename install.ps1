@@ -1,6 +1,6 @@
-$link = "https://github.com/Equicord/Equilotl/releases/latest/download/EquilotlCli.exe"
+$link = "https://github.com/BricksAreCool/mylotl/releases/latest/download/EquilotlCli.exe"
 
-$outfile = "$env:TEMP\EquilotlCli.exe"
+$outfile = "$env:TEMP\MylotlCli.exe"
 
 Write-Output "Downloading installer to $outfile"
 

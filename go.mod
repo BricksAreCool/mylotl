@@ -1,4 +1,4 @@
-module equilotl
+module mylotl
 
 go 1.26.2
 

@@ -10,11 +10,11 @@ package main
 
 import (
 	"bytes"
-	"equilotl/buildinfo"
 	"errors"
 	"flag"
 	"fmt"
 	"io"
+	"mylotl/buildinfo"
 	"os"
 	"runtime"
 	"strings"

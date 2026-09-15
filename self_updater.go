@@ -7,10 +7,10 @@
 package main
 
 import (
-	"equilotl/buildinfo"
 	"errors"
 	"fmt"
 	"io"
+	"mylotl/buildinfo"
 	"net/http"
 	"os"
 	"path"

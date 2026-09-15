@@ -11,10 +11,10 @@ package main
 import (
 	"bytes"
 	_ "embed"
-	"equilotl/buildinfo"
 	"errors"
 	"image"
 	"image/color"
+	"mylotl/buildinfo"
 
 	g "github.com/AllenDang/giu"
 	"github.com/AllenDang/imgui-go"
