@@ -88,119 +88,6 @@ jobs:
             Mylotl-wayland
             Mylotl
             MylotlCli-linux
-
-  build-mac:
-    runs-on: ${{ matrix.runner }}
-
-    strategy:
-      matrix:
-        include:
-          - arch: amd64
-            runner: macos-15-intel
-            artifact_name: Mylotl-macos
-            gui_name: Mylotl-darwin-x64.zip
-            cli_name: MylotlCli-darwin-x64
-          - arch: arm64
-            runner: macos-latest
-            artifact_name: Mylotl-macos-arm64
-            gui_name: Mylotl-darwin-arm64.zip
-            cli_name: MylotlCli-darwin-arm64
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v6
-
-      - name: Install Go
-        uses: actions/setup-go@v6
-        with:
-          go-version: "1.26.2"
-
-      - uses: actions/cache@v5
-        with:
-          path: |
-            ~/Library/Caches/go-build
-            ~/go/pkg/mod
-          key: ${{ runner.os }}-${{ matrix.arch }}-go-${{ hashFiles('**/go.sum') }}
-          restore-keys: |
-            ${{ runner.os }}-${{ matrix.arch }}-go-
-
-      - name: Install dependencies
-        run: brew install sdl2
-
-      - name: Install Go dependencies
-        run: go get -v
-
-      - name: Build GUI
-        run: CGO_CFLAGS="-mmacosx-version-min=10.15"
-          CGO_LDFLAGS="-mmacosx-version-min=10.15" CGO_ENABLED=1 GOOS=darwin
-          GOARCH=${{ matrix.arch }} go build -v -tags "static gui" -ldflags "-s
-          -w -X 'Mylotl/buildinfo.InstallerGitHash=$(git rev-parse --short
-          HEAD)' -X 'Mylotl/buildinfo.InstallerTag=${{ github.ref_name }}'" -o
-          Mylotl
-
-      - name: Build CLI
-        run: CGO_CFLAGS="-mmacosx-version-min=10.15"
-          CGO_LDFLAGS="-mmacosx-version-min=10.15" CGO_ENABLED=1 GOOS=darwin
-          GOARCH=${{ matrix.arch }} go build -v -tags "cli" -ldflags "-s
-          -w -X 'Mylotl/buildinfo.InstallerGitHash=$(git rev-parse --short
-          HEAD)' -X 'Mylotl/buildinfo.InstallerTag=${{ github.ref_name }}'" -o
-          ${{ matrix.cli_name }}
-
-      - name: Update executable
-        run: |
-          chmod +x Mylotl*
-
-      - name: Generate MacOS GUI bundle
-        run: |
-          mkdir -p Mylotl.app/Contents/MacOS
-          mkdir -p Mylotl.app/Contents/Resources
-          cp macos/Info.plist Mylotl.app/Contents/Info.plist
-          mv Mylotl Mylotl.app/Contents/MacOS/Mylotl
-          cp macos/icon.icns Mylotl.app/Contents/Resources/icon.icns
-
-      - name: Import signing certificate
-        env:
-          CSC_LINK: ${{ secrets.APPLE_SIGNING_CERT }}
-          CSC_KEY_PASSWORD: ${{ secrets.APPLE_SIGNING_CERT_PASSWORD }}
-        run: |
-          echo "$CSC_LINK" | base64 --decode > certificate.p12
-          security create-keychain -p "" build.keychain
-          security default-keychain -s build.keychain
-          security unlock-keychain -p "" build.keychain
-          security import certificate.p12 -k build.keychain -P "$CSC_KEY_PASSWORD" -T /usr/bin/codesign
-          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "" build.keychain
-          rm certificate.p12
-
-      - name: Sign the executables
-        run: |
-          codesign --force --options runtime --sign "Developer ID Application" Mylotl.app/Contents/MacOS/Mylotl
-          codesign --force --options runtime --sign "Developer ID Application" Mylotl.app
-          codesign --force --options runtime --sign "Developer ID Application" ${{ matrix.cli_name }}
-
-      - name: Notarize the executables
-        env:
-          API_KEY: ${{ secrets.APPLE_API_KEY }}
-          APPLE_API_KEY_ID: ${{ secrets.APPLE_API_KEY_ID }}
-          APPLE_API_ISSUER: ${{ secrets.APPLE_API_ISSUER }}
-        run: |
-          echo "$API_KEY" > apple.p8
-          ditto -c -k --keepParent Mylotl.app Mylotl-notarize.zip
-          ditto -c -k ${{ matrix.cli_name }} MylotlCli-notarize.zip
-          xcrun notarytool submit Mylotl-notarize.zip --key apple.p8 --key-id "$APPLE_API_KEY_ID" --issuer "$APPLE_API_ISSUER" --wait
-          xcrun stapler staple Mylotl.app
-          xcrun notarytool submit MylotlCli-notarize.zip --key apple.p8 --key-id "$APPLE_API_KEY_ID" --issuer "$APPLE_API_ISSUER" --wait
-          rm apple.p8 Mylotl-notarize.zip MylotlCli-notarize.zip
-
-      - name: Create final zip
-        run: zip -r ${{ matrix.gui_name }} Mylotl.app
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: ${{ matrix.artifact_name }}
-          path: |
-            ${{ matrix.gui_name }}
-            ${{ matrix.cli_name }}
-
   build-windows:
     runs-on: windows-latest
 
@@ -259,7 +146,7 @@ jobs:
 
   release:
     runs-on: ubuntu-latest
-    needs: [build-linux, build-mac, build-windows]
+    needs: [build-linux, build-windows]
 
     steps:
       - name: Checkout code
