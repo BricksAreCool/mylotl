@@ -1,4 +1,4 @@
-# Equilotl
+# Equilotl / Mylotl
 
 The Equicord Installer allows you to install [Equicord, the cutest Discord Desktop client mod](https://github.com/Equicord/Equicord)
 
